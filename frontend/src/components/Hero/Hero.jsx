@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { FaWhatsapp, FaChevronDown } from 'react-icons/fa6';
 import { PROJECT_INFO } from '../../data/proyecto';
 
-
 export default function Hero() {
+  const videoRef = useRef(null);
   const [showOceanVideo, setShowOceanVideo] = useState(false);
 
   useEffect(() => {
@@ -13,6 +13,30 @@ export default function Hero() {
     }, 7000);
 
     return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const attemptPlay = () => {
+      video.muted = true;
+      video.play().catch(() => {
+        const retry = () => {
+          video.play().catch(() => {});
+          document.removeEventListener('touchstart', retry);
+          document.removeEventListener('scroll', retry);
+        };
+        document.addEventListener('touchstart', retry, { once: true });
+        document.addEventListener('scroll', retry, { once: true });
+      });
+    };
+
+    if (video.readyState >= 3) {
+      attemptPlay();
+    } else {
+      video.addEventListener('canplay', attemptPlay, { once: true });
+    }
   }, []);
 
   const handleScrollToProject = (e) => {
@@ -25,43 +49,38 @@ export default function Hero() {
 
   return (
     <section id="inicio" className="relative w-full h-[100dvh] sm:h-screen min-h-[600px] flex items-center justify-center overflow-hidden bg-[#2D1E14]">
-      {/* Aerial Drone Beach Video Stream (Villarobles Top-Down Beach Shore Video) */}
-      <div className="hero-video-wrapper absolute inset-0 z-0 overflow-hidden pointer-events-none scale-125">
-        <iframe
-          src="https://www.youtube-nocookie.com/embed/_axXD-NpJQQ?autoplay=1&mute=1&controls=0&loop=1&playlist=_axXD-NpJQQ&playsinline=1&showinfo=0&rel=0&iv_load_policy=3&disablekb=1&enablejsapi=1"
-          title="Aerial Beach Video"
-          className="hero-video-iframe w-full h-full object-cover border-none pointer-events-none scale-150 opacity-90"
-          allow="autoplay; encrypted-media"
-        />
+      {/* ── Background Video — HTML5 native for mobile autoplay ── */}
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+        <video
+          ref={videoRef}
+          autoPlay
+          loop
+          muted
+          playsInline
+          webkit-playsinline="true"
+          preload="auto"
+          poster="/fotos/hero.jpg"
+          className="w-full h-full object-cover opacity-85"
+        >
+          <source src="/fotos/hero.mp4" type="video/mp4" />
+        </video>
       </div>
 
-
-
-      {/* Initial Cover Image (Displays for 7 seconds, then smoothly cross-fades out) */}
+      {/* Cover image — permanece visible 7 segundos y luego hace fade out hacia el video */}
       <div
-        className={`absolute inset-0 z-1 overflow-hidden transition-opacity duration-1000 ${
-          showOceanVideo ? 'opacity-0 pointer-events-none' : 'opacity-100'
-        }`}
+        className="absolute inset-0 z-1 overflow-hidden pointer-events-none transition-opacity duration-[1500ms]"
+        style={{ opacity: showOceanVideo ? 0 : 1 }}
       >
         <img
           src="/fotos/hero.jpg"
           alt="Victor Hugo - Portada"
-          className="w-full h-full object-cover object-center animate-ken-burns"
-          onError={(e) => {
-            e.target.style.display = 'none';
-          }}
+          className="w-full h-full object-cover object-center"
         />
-        
-        {/* Contrast gradient for image state */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-black/50" />
       </div>
 
-      {/* Subtle overlay gradient over ocean video once active */}
-      <div
-        className={`absolute inset-0 z-1 bg-gradient-to-t from-[#24170E]/85 via-ocean-dark/20 to-black/40 transition-opacity duration-1000 pointer-events-none ${
-          showOceanVideo ? 'opacity-100' : 'opacity-0'
-        }`}
-      />
+      {/* Overlay gradient */}
+      <div className="absolute inset-0 z-1 bg-gradient-to-t from-black/80 via-black/35 to-black/50 pointer-events-none" />
 
 
 

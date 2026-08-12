@@ -6,8 +6,9 @@ const NAV_ITEMS = [
   { label: 'Inicio', href: '#inicio' },
   { label: 'El Proyecto', href: '#proyecto' },
   { label: 'Amenities', href: '#amenities' },
-  { label: 'Ubicación', href: '#ubicacion' },
   { label: 'Plantas', href: '#plantas' },
+  { label: 'Galería', href: '#galeria' },
+  { label: 'Ubicación', href: '#ubicacion' },
   { label: 'Contacto', href: '#contacto' },
 ];
 

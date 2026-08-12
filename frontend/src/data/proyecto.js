@@ -7,6 +7,8 @@ export const PROJECT_INFO = {
   whatsappNumber: "2254456286",
   whatsappFormatted: "+54 9 2254 45-6286",
   whatsappLink: "https://wa.me/5492254456286",
+  instagramHandle: "@victorhugo_uno",
+  instagramLink: "https://www.instagram.com/victorhugo_uno/",
   floorsCount: 4,
   location: {
     lat: -37.1264, // Coordenadas aproximadas Av. Victor Hugo 1249, Pinamar

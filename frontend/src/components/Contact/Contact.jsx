@@ -1,22 +1,92 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FaWhatsapp, FaInstagram, FaLocationDot, FaPlay, FaImage } from 'react-icons/fa6';
+import { FaWhatsapp, FaInstagram, FaLocationDot, FaArrowUpRightFromSquare, FaHeart } from 'react-icons/fa6';
 import { PROJECT_INFO } from '../../data/proyecto';
 
-const INSTAGRAM_HANDLE = 'victorhugo_uno';
-const INSTAGRAM_URL = `https://www.instagram.com/${INSTAGRAM_HANDLE}/`;
-
-// Placeholder grid items for "próximamente" Instagram feed
-const PLACEHOLDER_POSTS = [
-  { type: 'video', label: 'Video del proyecto' },
-  { type: 'image', label: 'Fachada' },
-  { type: 'image', label: 'Interior' },
-  { type: 'video', label: 'Recorrido virtual' },
-  { type: 'image', label: 'Detalle arquitectónico' },
-  { type: 'image', label: 'Entorno' },
+const MOCK_POSTS = [
+  {
+    id: 'mock_1',
+    media_url: '/fotos/hero.jpg',
+    permalink: PROJECT_INFO.instagramLink,
+    caption: 'Viví frente al horizonte en Victor Hugo. Espacios diseñados con máxima elegancia en Pinamar/Ostende.',
+  },
+  {
+    id: 'mock_2',
+    media_url: '/fotos/edificio.jpg',
+    permalink: PROJECT_INFO.instagramLink,
+    caption: 'Avanzan las obras en Av. Victor Hugo 1249. Cada detalle pensado para tu confort.',
+  },
+  {
+    id: 'mock_3',
+    media_url: '/fotos/espacios_confort.jpg',
+    permalink: PROJECT_INFO.instagramLink,
+    caption: 'Interiores luminosos e integrados. Calidad de vida costera durante todo el año.',
+  },
+  {
+    id: 'mock_4',
+    media_url: '/fotos/frente_1.jpg',
+    permalink: PROJECT_INFO.instagramLink,
+    caption: 'Financiación directa del desarrollador. Planes a tu medida sin intermediarios bancarios.',
+  },
+  {
+    id: 'mock_5',
+    media_url: '/fotos/frente_2.jpg',
+    permalink: PROJECT_INFO.instagramLink,
+    caption: 'Ubicación privilegiada rodeada de entorno natural y pinos marítimos.',
+  },
+  {
+    id: 'mock_6',
+    media_url: '/fotos/interior-01.jpg',
+    permalink: PROJECT_INFO.instagramLink,
+    caption: 'Consultá por unidades disponibles y sumate a Victor Hugo Pinamar.',
+  },
 ];
 
 export default function Contact() {
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [isLive, setIsLive] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function fetchInstagramPosts() {
+      const token =
+        import.meta.env.VITE_INSTAGRAM_ACCESS_TOKEN ||
+        'IGAAOO91WDenlBZAGF1LU9uNGhtMVQ0M2ZASMmhlcFRnQjhHeGJEeFJLU1ZAJakhRaFJ3VHRvWDRVU3lpUkF1QXNVWndrYlhFLWVJajMzcTRaenB0UXA5UzVtWkx1Qmp1T0wtQUpyQzMzWDlSSjliNVMxUkVLXzhraVd3TkdtQ1ZA3awZDZD';
+
+      try {
+        const url = `https://graph.instagram.com/me/media?fields=id,caption,media_type,media_url,permalink,thumbnail_url,timestamp&access_token=${token}&limit=6`;
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (isMounted && data && data.data && data.data.length > 0) {
+          const formattedPosts = data.data.map((item) => ({
+            id: item.id,
+            media_url: item.media_type === 'VIDEO' ? (item.thumbnail_url || item.media_url) : item.media_url,
+            permalink: item.permalink || PROJECT_INFO.instagramLink,
+            caption: item.caption || 'Publicación en Instagram @victorhugo_uno',
+          }));
+          setPosts(formattedPosts);
+          setIsLive(true);
+        } else {
+          if (isMounted) setPosts(MOCK_POSTS);
+        }
+      } catch (err) {
+        console.warn('Usando contenido de reserva de Instagram:', err);
+        if (isMounted) setPosts(MOCK_POSTS);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    }
+
+    fetchInstagramPosts();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
     <section id="contacto" className="py-24 bg-white relative overflow-hidden">
 
@@ -26,7 +96,7 @@ export default function Contact() {
         <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-sand/70" />
       </div>
 
-      <div className="w-full px-6 lg:px-16 relative z-10">
+      <div className="w-full px-6 lg:px-24 xl:px-32 relative z-10">
 
         {/* Section header */}
         <div className="text-center max-w-2xl mx-auto mb-16">
@@ -39,7 +109,7 @@ export default function Contact() {
           <div className="mt-4 mx-auto w-16 h-[2px] bg-ocean-light" />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
 
           {/* ── LEFT COLUMN: Contact Info ── */}
           <motion.div
@@ -112,110 +182,118 @@ export default function Contact() {
             </div>
           </motion.div>
 
-          {/* ── RIGHT COLUMN: Instagram Feed ── */}
+          {/* ── RIGHT COLUMN: Real Instagram Feed (Compact Grid) ── */}
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: false, margin: '-100px' }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="lg:col-span-7"
+            className="lg:col-span-7 bg-stone-50/80 p-6 sm:p-8 rounded-3xl border border-stone-200/80 shadow-sm"
           >
-            {/* Instagram Header — entire header is a clickable link */}
-            <a
-              href={INSTAGRAM_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-4 mb-6 group cursor-pointer"
-            >
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-300">
-                <FaInstagram className="w-7 h-7 text-white" />
-              </div>
-              <div>
-                <h3 className="font-serif text-2xl font-bold text-ocean-dark group-hover:text-ocean-medium transition-colors">
-                  @{INSTAGRAM_HANDLE}
-                </h3>
-                <p className="text-xs text-sand-muted font-light mt-0.5">
-                  Seguinos para ver fotos y videos del proyecto
-                </p>
-              </div>
-              <span className="ml-auto inline-flex items-center gap-2 px-5 py-2.5 rounded-full border-2 border-ocean-dark text-ocean-dark group-hover:bg-ocean-dark group-hover:text-white font-semibold text-xs uppercase tracking-wider transition-all duration-300">
-                <FaInstagram className="w-3.5 h-3.5" />
-                <span>Seguir</span>
-              </span>
-            </a>
-
-            {/* "Próximamente" notice */}
-            <div className="mb-5 p-4 rounded-xl bg-sand border border-ocean-light/30 flex items-center gap-3">
-              <div className="w-2 h-2 rounded-full bg-ocean-light animate-pulse shrink-0" />
-              <p className="text-xs text-ocean-dark font-medium">
-                <span className="font-bold">Próximamente</span> · Estamos por subir fotos y videos del proyecto. ¡Seguinos para no perderte nada!
-              </p>
-            </div>
-
-            {/* Placeholder Grid — 6 posts */}
-            <div className="grid grid-cols-3 gap-1.5 max-w-xs">
-              {PLACEHOLDER_POSTS.map((post, i) => (
-                <motion.a
-                  key={i}
-                  href={INSTAGRAM_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  viewport={{ once: false }}
-                  transition={{ duration: 0.4, delay: i * 0.07 }}
-                  className="relative aspect-square rounded-lg overflow-hidden bg-gradient-to-br from-ocean-deep to-ocean-dark group cursor-pointer"
-                >
-                  {/* Grid pattern overlay */}
-                  <div className="absolute inset-0 opacity-10"
-                    style={{ backgroundImage: 'repeating-linear-gradient(0deg, #C4924A 0px, #C4924A 1px, transparent 1px, transparent 30px), repeating-linear-gradient(90deg, #C4924A 0px, #C4924A 1px, transparent 1px, transparent 30px)' }}
-                  />
-
-                  {/* Shimmer animation */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent"
-                    style={{ animation: `shimmer ${1.5 + i * 0.2}s ease-in-out ${i * 0.15}s infinite alternate` }}
-                  />
-
-                  {/* Center icon */}
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 group-hover:scale-105 transition-transform duration-300">
-                    <div className="w-10 h-10 rounded-full bg-white/10 border border-ocean-soft/30 flex items-center justify-center">
-                      {post.type === 'video'
-                        ? <FaPlay className="w-4 h-4 text-ocean-soft ml-0.5" />
-                        : <FaImage className="w-4 h-4 text-ocean-soft" />
-                      }
-                    </div>
-                    <span className="text-[8px] uppercase tracking-wider text-ocean-soft/70 text-center px-2 font-medium leading-tight">
-                      {post.label}
-                    </span>
-                  </div>
-
-                  {/* Type badge */}
-                  {post.type === 'video' && (
-                    <div className="absolute top-2 right-2">
-                      <span className="text-[8px] bg-white/15 text-white px-1.5 py-0.5 rounded font-bold uppercase tracking-wide">
-                        VIDEO
-                      </span>
-                    </div>
-                  )}
-                </motion.a>
-              ))}
-            </div>
-
-            {/* View profile CTA */}
-            <div className="mt-6 text-center">
+            {/* Instagram Header */}
+            <div className="flex items-center justify-between gap-4 mb-6 pb-5 border-b border-stone-200">
               <a
-                href={INSTAGRAM_URL}
+                href={PROJECT_INFO.instagramLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] text-white font-semibold text-sm uppercase tracking-widest shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300"
+                className="flex items-center gap-3.5 group cursor-pointer"
               >
-                <FaInstagram className="w-5 h-5" />
-                <span>Ver perfil en Instagram</span>
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] flex items-center justify-center shadow-md group-hover:scale-105 transition-transform duration-300">
+                  <FaInstagram className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-serif text-xl font-bold text-ocean-dark group-hover:text-ocean-medium transition-colors">
+                      {PROJECT_INFO.instagramHandle}
+                    </h3>
+                    {isLive && (
+                      <span className="inline-flex items-center gap-1 text-[9px] uppercase font-semibold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                        En vivo
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-stone-500 font-light mt-0.5">
+                    Fotos y novedades en tiempo real
+                  </p>
+                </div>
               </a>
-              <p className="mt-3 text-xs text-sand-muted font-light">
-                Fotos y videos del proyecto estarán disponibles próximamente
-              </p>
+
+              <a
+                href={PROJECT_INFO.instagramLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-stone-300 text-ocean-dark hover:bg-gradient-to-r hover:from-[#833AB4] hover:to-[#FD1D1D] hover:text-white hover:border-transparent font-semibold text-xs uppercase tracking-wider transition-all duration-300"
+              >
+                <FaInstagram className="w-3.5 h-3.5" />
+                <span>Seguir</span>
+              </a>
             </div>
+
+            {/* Live Posts Grid — 6 compact cards (3 cols x 2 rows) */}
+            {loading ? (
+              <div className="grid grid-cols-3 gap-3">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="aspect-square rounded-xl bg-stone-200 animate-pulse" />
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-3 sm:gap-4">
+                {posts.slice(0, 6).map((post, i) => (
+                  <motion.a
+                    key={post.id || i}
+                    href={post.permalink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: false }}
+                    transition={{ duration: 0.4, delay: i * 0.05 }}
+                    className="group relative aspect-square rounded-xl overflow-hidden bg-stone-900 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer block"
+                  >
+                    <img
+                      src={post.media_url}
+                      alt={post.caption || 'Instagram Victor Hugo'}
+                      loading="lazy"
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
+                      onError={(e) => {
+                        e.target.src = MOCK_POSTS[i % MOCK_POSTS.length].media_url;
+                      }}
+                    />
+
+                    {/* Hover Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-3 flex flex-col justify-between text-white">
+                      <div className="flex justify-end">
+                        <FaArrowUpRightFromSquare className="w-3 h-3 text-white/90" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-sans line-clamp-2 text-stone-200 leading-tight">
+                          {post.caption}
+                        </p>
+                        <div className="flex items-center gap-1 text-[9px] font-semibold text-pink-300">
+                          <FaHeart className="w-2.5 h-2.5 text-pink-400" />
+                          <span>Instagram</span>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.a>
+                ))}
+              </div>
+            )}
+
+            {/* Bottom CTA */}
+            <div className="mt-6 text-center">
+              <a
+                href={PROJECT_INFO.instagramLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-[#833AB4] via-[#FD1D1D] to-[#F77737] hover:opacity-95 text-white font-sans font-bold text-xs uppercase tracking-widest shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-300"
+              >
+                <FaInstagram className="w-4 h-4 text-white" />
+                <span>Ver más publicaciones en Instagram</span>
+              </a>
+            </div>
+
           </motion.div>
 
         </div>
