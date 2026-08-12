@@ -1,0 +1,93 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  .font-serif {
+    font-family: 'Playfair Display', Georgia, serif;
+  }
+
+  /* Smooth transitions for theme toggle */
+  *,
+  ::before,
+  ::after {
+    transition-property: background-color, border-color, color, fill, stroke;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 200ms;
+  }
+}
+
+/* Custom Scrollbar styled for warm beach palette */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F2E8D9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #C4924A;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #6B4C32;
+}
+
+/* Glassmorphism utilities */
+.glass-nav {
+  background: rgba(250, 246, 240, 0.90);
+  backdrop-filter: blur(12px);
+}
+
+.glass-card {
+  background: rgba(255, 252, 248, 0.70);
+  backdrop-filter: blur(8px);
+}
+
+/* Shimmer animation for Instagram feed placeholders */
+@keyframes shimmer {
+  0% {
+    opacity: 0.4;
+    transform: translateX(-100%);
+  }
+
+  100% {
+    opacity: 0.8;
+    transform: translateX(100%);
+  }
+}
+
+.instagram-shimmer {
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+/* ── Hero Video Mobile Fix ─────────────────────────────────── */
+/* On mobile (<640px) override the scale-125 wrapper and use
+   a proper cover technique so the video fills the entire viewport */
+@media (max-width: 639px) {
+  .hero-video-wrapper {
+    transform: none !important;
+  }
+
+  .hero-video-iframe {
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    min-width: 177.78vh !important;
+    min-height: 100vh !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    scale: 1 !important;
+  }
+}
