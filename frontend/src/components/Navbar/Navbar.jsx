@@ -52,22 +52,28 @@ export default function Navbar() {
           onClick={(e) => handleNavClick(e, '#inicio')}
           className="group flex flex-col focus:outline-none"
         >
-          <span className={`font-serif tracking-[0.2em] font-bold text-lg md:text-xl transition-colors duration-300 ${
-            isScrolled
-              ? 'text-ocean-dark group-hover:text-ocean-light'
-              : 'text-white group-hover:text-sand-light'
-          }`}>
+          <span
+            className={`tracking-[0.25em] font-semibold text-xl md:text-2xl transition-colors duration-300 ${
+              isScrolled
+                ? 'text-[#2C241D] group-hover:text-[#9E7B4F]'
+                : 'text-white group-hover:text-sand-light'
+            }`}
+            style={{ fontFamily: "'Cormorant Garamond', serif" }}
+          >
             <span className="hidden sm:inline">{PROJECT_INFO.name}</span>
             <span className="sm:hidden">{PROJECT_INFO.shortName}</span>
           </span>
           <span className={`text-[9px] uppercase tracking-[0.3em] font-light transition-colors duration-300 ${
             isScrolled
-              ? 'text-ocean-light'
+              ? 'text-[#9E7B4F]'
               : 'text-sand-light/90'
-          }`}>
+          }`}
+            style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+          >
             Pinamar • Ostende
           </span>
         </a>
+
 
         {/* Desktop Navigation */}
         <nav className="hidden lg:flex items-center space-x-8">

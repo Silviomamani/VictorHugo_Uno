@@ -85,7 +85,6 @@ export default function Amenities() {
           </span>
           <h2 className="font-serif text-5xl sm:text-6xl font-bold text-ocean-dark tracking-tight leading-tight mb-4">
             Amenities
-            <span className="block text-ocean-light text-3xl sm:text-4xl font-light mt-1">Proyectados</span>
           </h2>
           <p className="text-stone-500 text-sm font-light leading-relaxed">
             Propuesta preliminar de equipamiento diseñada para la máxima calidad de vida costera.

@@ -1,6 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaXmark, FaChevronLeft, FaChevronRight, FaExpand } from 'react-icons/fa6';
+import { FaXmark, FaChevronLeft, FaChevronRight, FaExpand, FaMagnifyingGlassPlus, FaMagnifyingGlassMinus, FaArrowsRotate } from 'react-icons/fa6';
 
 const GALLERY_IMAGES = [
   {
@@ -61,41 +61,149 @@ const GALLERY_IMAGES = [
   }
 ];
 
+const MIN_ZOOM = 1;
+const MAX_ZOOM = 4;
+const ZOOM_STEP = 0.5;
+
 export default function Gallery() {
   const [selectedIndex, setSelectedIndex] = useState(null);
+
+  // ─── Carousel drag state ───────────────────────────────────────────────────
   const trackRef = useRef(null);
+  const isDragging = useRef(false);
+  const dragStartX = useRef(0);
+  const scrollStartLeft = useRef(0);
+  const didDrag = useRef(false);
+
+  const onTrackMouseDown = (e) => {
+    isDragging.current = true;
+    didDrag.current = false;
+    dragStartX.current = e.clientX;
+    scrollStartLeft.current = trackRef.current.scrollLeft;
+    trackRef.current.style.cursor = 'grabbing';
+    trackRef.current.style.userSelect = 'none';
+  };
+
+  const onTrackMouseMove = useCallback((e) => {
+    if (!isDragging.current) return;
+    const dx = e.clientX - dragStartX.current;
+    if (Math.abs(dx) > 4) didDrag.current = true;
+    trackRef.current.scrollLeft = scrollStartLeft.current - dx;
+  }, []);
+
+  const onTrackMouseUp = useCallback(() => {
+    isDragging.current = false;
+    if (trackRef.current) {
+      trackRef.current.style.cursor = 'grab';
+      trackRef.current.style.userSelect = '';
+    }
+  }, []);
 
   const scrollLeft = () => {
-    if (trackRef.current) {
-      trackRef.current.scrollBy({ left: -480, behavior: 'smooth' });
-    }
+    if (trackRef.current) trackRef.current.scrollBy({ left: -480, behavior: 'smooth' });
   };
-
   const scrollRight = () => {
-    if (trackRef.current) {
-      trackRef.current.scrollBy({ left: 480, behavior: 'smooth' });
-    }
+    if (trackRef.current) trackRef.current.scrollBy({ left: 480, behavior: 'smooth' });
   };
 
-  const openLightbox = (index) => setSelectedIndex(index);
-  const closeLightbox = () => setSelectedIndex(null);
+  const openLightbox = (index) => {
+    if (!didDrag.current) setSelectedIndex(index);
+  };
+  const closeLightbox = () => {
+    setSelectedIndex(null);
+    resetZoom();
+  };
 
   const showNext = () => {
-    if (selectedIndex !== null) {
-      setSelectedIndex((prevIndex) => (prevIndex + 1) % GALLERY_IMAGES.length);
-    }
+    setSelectedIndex((prev) => (prev + 1) % GALLERY_IMAGES.length);
+    resetZoom();
+  };
+  const showPrev = () => {
+    setSelectedIndex((prev) => (prev - 1 + GALLERY_IMAGES.length) % GALLERY_IMAGES.length);
+    resetZoom();
   };
 
-  const showPrev = () => {
-    if (selectedIndex !== null) {
-      setSelectedIndex((prevIndex) => (prevIndex - 1 + GALLERY_IMAGES.length) % GALLERY_IMAGES.length);
+  // ─── Lightbox zoom & pan state ─────────────────────────────────────────────
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const isPanning = useRef(false);
+  const panStart = useRef({ x: 0, y: 0 });
+  const panOrigin = useRef({ x: 0, y: 0 });
+
+  const resetZoom = () => {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+  };
+
+  const clampPan = (newPan, currentZoom) => {
+    const maxOffset = (currentZoom - 1) * 200;
+    return {
+      x: Math.max(-maxOffset, Math.min(maxOffset, newPan.x)),
+      y: Math.max(-maxOffset, Math.min(maxOffset, newPan.y)),
+    };
+  };
+
+  const handleWheel = (e) => {
+    e.preventDefault();
+    const delta = e.deltaY < 0 ? ZOOM_STEP : -ZOOM_STEP;
+    setZoom((prev) => {
+      const next = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, prev + delta));
+      if (next === MIN_ZOOM) setPan({ x: 0, y: 0 });
+      return next;
+    });
+  };
+
+  const handleImgMouseDown = (e) => {
+    if (zoom <= 1) return;
+    e.preventDefault();
+    isPanning.current = true;
+    panStart.current = { x: e.clientX, y: e.clientY };
+    panOrigin.current = { ...pan };
+  };
+
+  const handleImgMouseMove = useCallback((e) => {
+    if (!isPanning.current) return;
+    const dx = e.clientX - panStart.current.x;
+    const dy = e.clientY - panStart.current.y;
+    setPan(clampPan({ x: panOrigin.current.x + dx, y: panOrigin.current.y + dy }, zoom));
+  }, [zoom]);
+
+  const handleImgMouseUp = useCallback(() => {
+    isPanning.current = false;
+  }, []);
+
+  // Touch pinch-to-zoom
+  const lastTouchDist = useRef(null);
+  const handleTouchMove = (e) => {
+    if (e.touches.length === 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (lastTouchDist.current !== null) {
+        const delta = (dist - lastTouchDist.current) * 0.01;
+        setZoom((prev) => Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, prev + delta)));
+      }
+      lastTouchDist.current = dist;
     }
   };
+  const handleTouchEnd = () => { lastTouchDist.current = null; };
+
+  // Keyboard navigation
+  useEffect(() => {
+    if (selectedIndex === null) return;
+    const handler = (e) => {
+      if (e.key === 'ArrowRight') showNext();
+      if (e.key === 'ArrowLeft') showPrev();
+      if (e.key === 'Escape') closeLightbox();
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [selectedIndex]);
 
   return (
     <section id="galeria" className="py-24 bg-gradient-to-b from-sand-light/60 via-white to-sand-light/40 relative overflow-hidden transition-colors duration-300">
       <div className="w-full px-6 lg:px-16">
-        
+
         {/* Header with Nav Arrows */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
           <div>
@@ -126,10 +234,15 @@ export default function Gallery() {
           </div>
         </div>
 
-        {/* Large Horizontal Carousel Track - Hidden Scrollbar */}
+        {/* Draggable Horizontal Carousel Track */}
         <div
           ref={trackRef}
-          className="flex gap-6 sm:gap-8 overflow-x-auto py-4 scroll-smooth snap-x snap-mandatory focus:outline-none [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex gap-6 sm:gap-8 overflow-x-auto py-4 scroll-smooth snap-x snap-mandatory focus:outline-none select-none [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          style={{ cursor: 'grab' }}
+          onMouseDown={onTrackMouseDown}
+          onMouseMove={onTrackMouseMove}
+          onMouseUp={onTrackMouseUp}
+          onMouseLeave={onTrackMouseUp}
         >
           {GALLERY_IMAGES.map((item, index) => (
             <motion.div
@@ -145,10 +258,9 @@ export default function Gallery() {
                 src={item.src}
                 alt={item.title}
                 loading="lazy"
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                onError={(e) => {
-                  e.target.src = item.fallbackSrc;
-                }}
+                draggable={false}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out pointer-events-none"
+                onError={(e) => { e.target.src = item.fallbackSrc; }}
               />
 
               {/* Gradient Overlay & Information */}
@@ -170,7 +282,7 @@ export default function Gallery() {
 
       </div>
 
-      {/* Lightbox Modal */}
+      {/* ── Lightbox Modal ──────────────────────────────────────────────────── */}
       <AnimatePresence>
         {selectedIndex !== null && (
           <motion.div
@@ -179,6 +291,8 @@ export default function Gallery() {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 bg-ocean-deep/95 backdrop-blur-md flex items-center justify-center p-4 sm:p-8"
             onClick={closeLightbox}
+            onMouseMove={handleImgMouseMove}
+            onMouseUp={handleImgMouseUp}
           >
             {/* Close Button */}
             <button
@@ -203,21 +317,70 @@ export default function Gallery() {
               className="max-w-6xl max-h-[85vh] relative flex flex-col items-center justify-center"
               onClick={(e) => e.stopPropagation()}
             >
-              <motion.img
+              {/* Image with zoom & pan — entry animation on wrapper div, zoom/pan on img */}
+              <motion.div
                 key={selectedIndex}
-                initial={{ opacity: 0, scale: 0.9 }}
+                initial={{ opacity: 0, scale: 0.93 }}
                 animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
+                exit={{ opacity: 0, scale: 0.93 }}
                 transition={{ duration: 0.3 }}
-                src={GALLERY_IMAGES[selectedIndex].src}
-                alt={GALLERY_IMAGES[selectedIndex].title}
-                className="max-w-full max-h-[75vh] object-contain rounded-xl shadow-2xl"
-                onError={(e) => {
-                  e.target.src = GALLERY_IMAGES[selectedIndex].fallbackSrc;
-                }}
-              />
-              
-              <div className="mt-4 text-center text-foam space-y-1">
+                className="overflow-hidden rounded-xl shadow-2xl"
+                style={{ maxWidth: '100%', maxHeight: '72vh' }}
+                onWheel={handleWheel}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+              >
+                <img
+                  src={GALLERY_IMAGES[selectedIndex].src}
+                  alt={GALLERY_IMAGES[selectedIndex].title}
+                  draggable={false}
+                  onMouseDown={handleImgMouseDown}
+                  style={{
+                    transform: `scale(${zoom}) translate(${pan.x / zoom}px, ${pan.y / zoom}px)`,
+                    transition: isPanning.current ? 'none' : 'transform 0.2s ease',
+                    cursor: zoom > 1 ? (isPanning.current ? 'grabbing' : 'grab') : 'zoom-in',
+                    maxWidth: '100%',
+                    maxHeight: '72vh',
+                    objectFit: 'contain',
+                    display: 'block',
+                    userSelect: 'none',
+                    transformOrigin: 'center center',
+                  }}
+                  onError={(e) => { e.target.src = GALLERY_IMAGES[selectedIndex].fallbackSrc; }}
+                />
+              </motion.div>
+
+              {/* Zoom Controls */}
+              <div className="mt-4 flex items-center gap-3">
+                <button
+                  onClick={(e) => { e.stopPropagation(); setZoom((z) => { const next = Math.max(MIN_ZOOM, z - ZOOM_STEP); if (next <= 1) setPan({ x: 0, y: 0 }); return next; }); }}
+                  className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors cursor-pointer"
+                  title="Alejar"
+                >
+                  <FaMagnifyingGlassMinus className="w-5 h-5" />
+                </button>
+
+                <button
+                  onClick={(e) => { e.stopPropagation(); setZoom((z) => Math.min(MAX_ZOOM, z + ZOOM_STEP)); }}
+                  className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors cursor-pointer"
+                  title="Acercar"
+                >
+                  <FaMagnifyingGlassPlus className="w-5 h-5" />
+                </button>
+
+                {zoom > 1 && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); resetZoom(); }}
+                    className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors cursor-pointer ml-1"
+                    title="Restablecer zoom"
+                  >
+                    <FaArrowsRotate className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              {/* Caption */}
+              <div className="mt-2 text-center text-foam space-y-1">
                 <span className="text-xs uppercase tracking-[0.2em] font-semibold text-ocean-soft">
                   {GALLERY_IMAGES[selectedIndex].category} • ({selectedIndex + 1} / {GALLERY_IMAGES.length})
                 </span>
