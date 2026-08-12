@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FaWhatsapp, FaChevronDown } from 'react-icons/fa6';
 import { PROJECT_INFO } from '../../data/proyecto';
-import OceanCanvas from './OceanCanvas';
+
 
 export default function Hero() {
   const [showOceanVideo, setShowOceanVideo] = useState(false);
@@ -35,8 +35,7 @@ export default function Hero() {
         />
       </div>
 
-      {/* 60fps Procedural Top-down Ocean Canvas (Backup / Atmosphere Blend) */}
-      <OceanCanvas />
+
 
       {/* Initial Cover Image (Displays for 7 seconds, then smoothly cross-fades out) */}
       <div
