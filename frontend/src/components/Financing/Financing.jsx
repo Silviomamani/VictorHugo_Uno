@@ -19,8 +19,8 @@ export default function Financing() {
         <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[#B59461]/8 rounded-full blur-[100px]" />
       </div>
 
-      <div className="w-full px-6 lg:px-16 relative z-10">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+      <div className="w-full px-6 lg:px-24 xl:px-32 relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-center">
           
           {/* ── LEFT COLUMN: Text Content & Checklist ── */}
           <motion.div
