@@ -6,7 +6,7 @@ import { PROJECT_LOCATION } from '../Location/Location';
 // Social links configuration
 export const SOCIAL_LINKS = {
   whatsapp: PROJECT_INFO.whatsappLink,
-  instagram: "https://www.instagram.com/victorhugo_uno/",
+  instagram: PROJECT_INFO.instagramLink,
   googleMaps: PROJECT_LOCATION.googleMapsUrl,
 };
 

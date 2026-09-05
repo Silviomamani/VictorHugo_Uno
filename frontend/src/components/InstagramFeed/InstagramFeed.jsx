@@ -67,7 +67,7 @@ export default function InstagramFeed() {
             id: item.id,
             media_url: item.media_type === 'VIDEO' ? (item.thumbnail_url || item.media_url) : item.media_url,
             permalink: item.permalink || PROJECT_INFO.instagramLink,
-            caption: item.caption || 'Publicación en Instagram @victorhugo_uno',
+            caption: item.caption || `Publicación en Instagram ${PROJECT_INFO.instagramHandle}`,
           }));
           setPosts(formattedPosts);
           setIsLive(true);
